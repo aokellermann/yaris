@@ -4,8 +4,10 @@ import gi, serial, signal, sys, os, subprocess
 from subprocess import Popen, PIPE
 gi.require_version("Gtk", "3.0")
 from gi.repository import GLib, Gtk, Pango, GdkX11
-
-ser = serial.Serial("/dev/ttyUSB0", 115200)
+try:
+    ser = serial.Serial("/dev/ttyUSB0", 115200)
+except serial.SerialException:
+    sys.exit("Couldn't open /dev/ttyUSB0")
 
 class Yaris(Gtk.Window):
     def __init__(self):
@@ -32,7 +34,10 @@ class Yaris(Gtk.Window):
         self.update_label(label)
         self.show_all()
         
-        command = "mplayer -slave -input file=%s -wid %i tv://video=/dev/video0" % (fifo_path, area.get_property("window").get_xid())
+        try:
+            command = "mplayer -slave -input file=%s -wid %i tv://video=/dev/video0" % (fifo_path, area.get_property("window").get_xid())
+        except Exception as e:
+            sys.exit("Couldn't open /dev/video0")
         subprocess.Popen(command.split(), stdout = PIPE, stderr = PIPE)
 
         
