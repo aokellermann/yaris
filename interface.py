@@ -51,8 +51,10 @@ class Yaris(Gtk.Window):
             if distance < 35:
                 timeout = 125
             
-            sys.stdout.write('\a') # beep
-            sys.stdout.flush()
+            command = "aplay /usr/share/yaris/beep.wav"
+            subprocess.Popen(command.split(), stdout = PIPE, stderr = PIPE)
+            #sys.stdout.write('\a') # beep
+            #sys.stdout.flush()
             
         GLib.timeout_add(timeout, self.update_label, label)
         
