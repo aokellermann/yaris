@@ -3,7 +3,7 @@
 import gi, serial, signal, sys, os, subprocess
 from subprocess import Popen, PIPE
 gi.require_version("Gtk", "3.0")
-from gi.repository import GLib, Gtk, Pango, GdkX11
+from gi.repository import GLib, Gtk, Pango, Gdk, GdkX11
 try:
     ser = serial.Serial("/dev/ttyUSB0", 115200)
 except serial.SerialException:
@@ -29,9 +29,12 @@ class Yaris(Gtk.Window):
         box = Gtk.VBox() 
         box.pack_start(label, expand = False,  fill = False, padding = 0)
         box.pack_end(area, expand = True, fill = True, padding = 0)
-        
-        self.add(box)
-        self.update_label(label)
+       
+        eb = Gtk.EventBox() #to change background color
+        eb.add(box)
+
+        self.add(eb)
+        self.update_label(eb, label)
         self.show_all()
         
         try:
@@ -41,24 +44,28 @@ class Yaris(Gtk.Window):
         subprocess.Popen(command.split(), stdout = PIPE, stderr = PIPE)
 
         
-    def update_label(self, label):
+    def update_label(self, ebox, label):
         distance = getLidarDistance()
         label.set_text(str(distance))
-        timeout = 500
+        timeout = 350
+        color = "green"
         if distance < 80:
-            if distance < 55:
+            color = "yellow"
+            if distance < 60:
                 timeout = 250
-            if distance < 35:
-                timeout = 125
+                color = "orange"
+
+            if distance < 40:
+                timeout = 150
+                color = "red"
             
             command = "aplay /usr/share/yaris/beep.wav"
             subprocess.Popen(command.split(), stdout = PIPE, stderr = PIPE)
-            #sys.stdout.write('\a') # beep
-            #sys.stdout.flush()
             
-        GLib.timeout_add(timeout, self.update_label, label)
+        ebox.modify_bg(Gtk.StateType.NORMAL, Gdk.color_parse(color)) # Change color of background of distance label
+        GLib.timeout_add(timeout, self.update_label, ebox, label)
         
-
+# Returns distance in centimeters, with a hardware minimum of 30
 def getLidarDistance():
     while True:
         count = ser.in_waiting
